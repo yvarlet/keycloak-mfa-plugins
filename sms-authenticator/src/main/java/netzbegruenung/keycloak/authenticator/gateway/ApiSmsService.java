@@ -199,6 +199,7 @@ public class ApiSmsService implements SmsService{
 	public Builder jsonRequest(String sendJson) {
 		return HttpRequest.newBuilder()
 			.uri(URI.create(apiurl))
+			.header("Accept", "application/json")
 			.header("Content-Type", "application/json")
 			.POST(HttpRequest.BodyPublishers.ofString(sendJson));
 	}
