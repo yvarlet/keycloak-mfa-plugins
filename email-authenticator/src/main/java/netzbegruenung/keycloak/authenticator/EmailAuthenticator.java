@@ -116,14 +116,10 @@ public class EmailAuthenticator implements Authenticator {
 				context.success();
 			}
 		} else {
-			AuthenticationExecutionModel execution = context.getExecution();
-			if (execution.isRequired()) {
-				context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
-					context.form().setAttribute("realm", context.getRealm())
-						.setError("emailAuthCodeInvalid").createForm(TPL_CODE));
-			} else if (execution.isConditional() || execution.isAlternative()) {
-				context.attempted();
-			}
+			context.getEvent().user(context.getUser()).error("invalid_user_credentials");
+			context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
+				context.form().setAttribute("realm", context.getRealm())
+					.setError("emailAuthCodeInvalid").createForm(TPL_CODE));
 		}
 	}
 
