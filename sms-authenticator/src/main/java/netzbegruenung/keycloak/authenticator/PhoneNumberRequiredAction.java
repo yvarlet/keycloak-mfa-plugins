@@ -86,12 +86,23 @@ public class PhoneNumberRequiredAction implements RequiredActionProvider, Creden
 				String mobileNumber = context.getUser().getAttributeStream(mobileNumberAttribute)
 					.filter(n -> n != null && !n.isBlank()).findFirst().orElse(null);
 				if (mobileNumber != null) {
-					SmsAuthCredentialProvider credentialProvider = (SmsAuthCredentialProvider) context.getSession()
-						.getProvider(CredentialProvider.class, SmsAuthCredentialProviderFactory.PROVIDER_ID);
-					credentialProvider.createCredential(context.getRealm(), context.getUser(),
-						SmsAuthCredentialModel.createSmsAuthenticator(mobileNumber));
-					logger.infof("Auto-enrolled user %s for SMS 2FA from attribute '%s'",
-						context.getUser().getUsername(), mobileNumberAttribute);
+					boolean normalizeNumber = Boolean.parseBoolean(config.getConfig().getOrDefault("normalizePhoneNumber", "false"));
+					String numberToEnroll = mobileNumber;
+					if (normalizeNumber) {
+						numberToEnroll = formatPhoneNumber(context, mobileNumber);
+						if (numberToEnroll == null || numberToEnroll.isBlank()) {
+							logger.warnf("Skipping SMS auto-enrollment for user %s: value '%s' from attribute '%s' failed phone number validation",
+								context.getUser().getUsername(), mobileNumber, mobileNumberAttribute);
+						}
+					}
+					if (numberToEnroll != null && !numberToEnroll.isBlank()) {
+						SmsAuthCredentialProvider credentialProvider = (SmsAuthCredentialProvider) context.getSession()
+							.getProvider(CredentialProvider.class, SmsAuthCredentialProviderFactory.PROVIDER_ID);
+						credentialProvider.createCredential(context.getRealm(), context.getUser(),
+							SmsAuthCredentialModel.createSmsAuthenticator(numberToEnroll));
+						logger.infof("Auto-enrolled user %s for SMS 2FA from attribute '%s'",
+							context.getUser().getUsername(), mobileNumberAttribute);
+					}
 				}
 			}
 		}
